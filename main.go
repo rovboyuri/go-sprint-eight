@@ -104,6 +104,8 @@ func main() {
 		return
 	}
 
+	defer db.Close()
+
 	store := NewParcelStore(db)
 	service := NewParcelService(store)
 
