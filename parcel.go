@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 )
 
 type ParcelStore struct {
@@ -53,6 +52,8 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	var res []Parcel
 
 	for rows.Next() {
@@ -81,18 +82,7 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 }
 
 func (s ParcelStore) SetAddress(number int, address string) error {
-	p, err := s.Get(number)
-
-	if err != nil {
-		return err
-	}
-
-	if p.Status != ParcelStatusRegistered {
-		err := fmt.Errorf("изменение адреса доступно только для посылок со статусом 'Зарегистрирована'")
-		return err
-	}
-
-	_, err = s.db.Exec("UPDATE parcel SET address = $1 WHERE number = $2", address, number)
+	_, err := s.db.Exec("UPDATE parcel SET address = $1 WHERE number = $2 AND status = $3", address, number, ParcelStatusRegistered)
 
 	if err != nil {
 		return err
@@ -102,18 +92,7 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 }
 
 func (s ParcelStore) Delete(number int) error {
-	p, err := s.Get(number)
-
-	if err != nil {
-		return err
-	}
-
-	if p.Status != ParcelStatusRegistered {
-		err := fmt.Errorf("удаление доступно только для посылок со статусом 'Зарегистрирована'")
-		return err
-	}
-
-	_, err = s.db.Exec("DELETE FROM parcel WHERE number = $1", number)
+	_, err := s.db.Exec("DELETE FROM parcel WHERE number = $1 AND status = $2", number, ParcelStatusRegistered)
 
 	if err != nil {
 		return err
